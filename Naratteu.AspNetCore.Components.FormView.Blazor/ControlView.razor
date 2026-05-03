@@ -1,0 +1,31 @@
+@using Microsoft.AspNetCore.Components.Web
+@code {
+    [Parameter] public required Form Form { get; init; }
+    [Parameter] public required Control Control { get; init; }
+    [CascadingParameter(Name = nameof(Refresh))]
+    public EventCallback Refresh { get; set; }
+}
+@switch (Control)
+{
+    case { Visible: not true }:
+        break;
+    case Button { Text: var text, Bounds: { X: var x, Y: var y, Width: var w, Height: var h }, Controls: [] } btn:
+        <button
+            style=@($"position:absolute;left:{x}px;top:{y}px;width:{w}px;height:{h}px;")
+            @onclick='async ()=> { btn.PerformClick(); await Refresh.InvokeAsync(); }'
+            >
+            @text
+        </button>
+        break;
+    case { Text: var text, Bounds: { X: var x, Y: var y, Width: var w, Height: var h }, Controls: var ctrls }:
+        <fieldset
+            style=@($"position:absolute;left:{x}px;top:{y}px;width:{w}px;height:{h}px;")
+            >
+            <legend>@text</legend>
+            @foreach (Control ctrl in ctrls)
+            {
+                <ControlView Form=Form Control=ctrl />
+            }
+        </fieldset>
+        break;
+}

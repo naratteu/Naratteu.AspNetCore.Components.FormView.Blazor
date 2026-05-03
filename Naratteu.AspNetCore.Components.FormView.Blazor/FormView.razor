@@ -1,0 +1,12 @@
+@code {
+    [Parameter] public Form Form { get; init; }
+}
+<fieldset style=@($"position:relative;width:{Form.Width}px;height:{Form.Height}px;")>
+    <legend>@Form.Text</legend>
+    <CascadingValue Name="Refresh" Value=@EventCallback.Factory.Create(this, StateHasChanged)>
+        @foreach (Control ctrl in Form.Controls)
+        {
+            <ControlView Form=Form Control=ctrl />
+        }
+    </CascadingValue>
+</fieldset>
