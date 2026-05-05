@@ -1,5 +1,5 @@
 @code {
-    [Parameter] public Form Form { get; init; }
+    [Parameter] public required Form Form { get; init; }
 }
 <fieldset style=@($"position:relative;width:{Form.Width}px;height:{Form.Height}px;")>
     <legend>@Form.Text</legend>

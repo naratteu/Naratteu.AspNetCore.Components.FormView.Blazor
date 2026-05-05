@@ -1,3 +1,4 @@
+@using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Web
 @code {
     [Parameter] public required Form Form { get; init; }
@@ -5,24 +6,146 @@
     [CascadingParameter(Name = nameof(Refresh))]
     public EventCallback Refresh { get; set; }
 }
+@{
+    var b = Control.Bounds;
+    var attrs = new Dictionary<string,object>
+    {
+        ["style"] = $"position:absolute;left:{b.X}px;top:{b.Y}px;width:{b.Width}px;height:{b.Height}px;",
+        ["hidden"] = !Control.Visible,
+        ["disabled"] = !Control.Enabled,
+    };
+}
 @switch (Control)
 {
-    case { Visible: not true }:
-        break;
-    case Button { Text: var text, Bounds: { X: var x, Y: var y, Width: var w, Height: var h }, Controls: [] } btn:
+    case Button { Controls: [] } btn:
         <button
-            style=@($"position:absolute;left:{x}px;top:{y}px;width:{w}px;height:{h}px;")
-            @onclick='async ()=> { btn.PerformClick(); await Refresh.InvokeAsync(); }'
+            @attributes=attrs
+            @onclick='() => { btn.PerformClick(); return Refresh.InvokeAsync(); }'
             >
-            @text
+            @btn.Text
         </button>
         break;
-    case { Text: var text, Bounds: { X: var x, Y: var y, Width: var w, Height: var h }, Controls: var ctrls }:
-        <fieldset
-            style=@($"position:absolute;left:{x}px;top:{y}px;width:{w}px;height:{h}px;")
+    case CheckBox { Controls: [] } cb:
+        <label>
+            @cb.Text
+            <InputCheckbox
+                @attributes=attrs
+                @bind-Value=cb.Checked
+                @bind-Value:after=Refresh.InvokeAsync
+                />
+        </label>
+        break;
+    case ComboBox { Controls: [] } cb:
+        <InputSelect
+            @attributes=attrs
+            @bind-Value=cb.SelectedIndex
+            @bind-Value:after=Refresh.InvokeAsync
             >
-            <legend>@text</legend>
-            @foreach (Control ctrl in ctrls)
+            @foreach(var (item, index) in cb.Items.Cast<object>().Select((item, index) => (item, index)))
+            {
+                <option value=@index selected=@(cb.SelectedIndex == index)>@item</option>
+            }
+        </InputSelect>
+        break;
+    case DataGridView dgv:
+        <table
+            @attributes=attrs
+            >
+            <thead>
+                <tr>
+                    @foreach (DataGridViewColumn col in dgv.Columns)
+                    {
+                        <th>@col.HeaderText</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (DataGridViewRow row in dgv.Rows)
+                {
+                    <tr>
+                        @foreach (DataGridViewCell cell in row.Cells)
+                        {
+                            <td>@cell.Value</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+        break;
+    case Label { Controls: [] } lb:
+        <span
+            @attributes=attrs
+            >
+            @lb.Text
+            </span>
+        break;
+    case ListBox { Controls: [] } lb:
+        <InputSelect
+            @attributes=attrs
+            size=@lb.Items.Count
+            @bind-Value=lb.SelectedIndex
+            @bind-Value:after=Refresh.InvokeAsync
+            >
+            @foreach (var (item, index) in lb.Items.Cast<object>().Select((item, index) => (item, index)))
+            {
+                <option value=@index selected=@(lb.SelectedIndex == index)>@item</option>
+            }
+        </InputSelect>
+        break;
+    case NumericUpDown { Controls: [] } nud:
+        <InputNumber
+            @attributes=attrs
+            min=@nud.Minimum
+            max=@nud.Maximum
+            readonly=@nud.ReadOnly
+            @bind-Value=nud.Value
+            @bind-Value:after=Refresh.InvokeAsync
+            />
+        break;
+    case RadioButton { Controls: [] } rb:
+        <label>
+            @rb.Text
+            <InputRadio
+                @attributes=attrs
+                @bind-Value=rb.Checked
+                @bind-Value:after=Refresh.InvokeAsync
+                />
+        </label>
+        break;
+    case TextBox { Controls: [], Multiline: false } tb:
+        <InputText
+            @attributes=attrs
+            readonly=@tb.ReadOnly
+            type=@(tb.PasswordChar == default ? "text" : "password")
+            @bind-Value=tb.Text
+            @bind-Value:after=Refresh.InvokeAsync
+            />
+        break;
+    case TextBox { Controls: [], Multiline: true } tb:
+        <InputTextArea
+            @attributes=attrs
+            readonly=@tb.ReadOnly
+            @bind-Value=tb.Text
+            @bind-Value:after=Refresh.InvokeAsync
+            />
+        break;
+    case TrackBar { Controls: [] }tb:
+        <InputNumber 
+            @attributes=attrs
+            type=range
+            min=@tb.Minimum
+            max=@tb.Maximum
+            step=@tb.SmallChange
+            @bind-Value=tb.Value
+            @bind-Value:after=Refresh.InvokeAsync
+            />
+        break;
+    case { } etc:
+        <fieldset
+            @attributes=attrs
+            >
+            <legend>@etc.Text</legend>
+            @foreach (Control ctrl in etc.Controls)
             {
                 <ControlView Form=Form Control=ctrl />
             }
