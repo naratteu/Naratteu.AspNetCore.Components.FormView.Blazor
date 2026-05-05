@@ -1,12 +1,50 @@
 # Naratteu.AspNetCore.Components.FormView.Blazor
 Build Web from Windows Forms apps ↔ [WebView](https://www.nuget.org/packages/Microsoft.AspNetCore.Components.WebView.WindowsForms)
 
-> **A temporary migration bridge — not a preservation tool.**  
-> **한시적 마이그레이션 도구입니다 — 레거시 보전 도구가 아닙니다.**
+## Template
 
----
+https://github.com/user-attachments/assets/3ac8883a-9eb8-4186-8959-2e6d276338aa
+
+```cs
+[STAThread]
+static void Main(string[] args)
+{
+    ApplicationConfiguration.Initialize();
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Services
+        .AddRazorComponents()
+        .AddInteractiveServerComponents();
+
+    var main = new Form1();
+    AddForm(() => new Form2());
+    AddForm(() => new Form3());
+    AddForm(() => new Form4());
+    void AddForm<T>(Func<T> form) where T : Form =>
+        builder.Services.AddScoped(_ =>
+            main.Invoke(() =>
+                { var f = form(); f.Show(); return f; }));
+
+    var app = builder.Build();
+    app.UseAntiforgery();
+    app.MapStaticAssets();
+    app.MapRazorComponents<App>()
+        .AddInteractiveServerRenderMode();
+    _ = app.RunAsync();
+    Application.Run(main);
+}
+```
+
+```razor
+@page "/form2"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject Form2 form
+<Naratteu.AspNetCore.Components.FormView.Blazor.FormView Form=form />
+```
 
 ## ⚠️ Read This First
+
+> **A temporary migration bridge — not a preservation tool.**  
+> **한시적 마이그레이션 도구입니다 — 레거시 보전 도구가 아닙니다.**
 
 This library exists for one purpose: **to help WinForms developers leave WinForms behind.**
 
